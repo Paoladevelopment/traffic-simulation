@@ -92,21 +92,36 @@ class Bridge:
 
         if direction_to == "sur":
             if self.north_traffic_light.is_green:
-                self.cars_waiting_north.append(car)
+                self.cars_waiting_north.append({
+                    "car": car,
+                    "pos": len(self.cars_waiting_north)
+                })
                 self.cars_passing += 1
                 car_queued = self.cars_waiting_north.pop(0) 
-                yield self.env.process(self.travel(car_queued, "norte", "sur"))
+                self.env.process(self.car_start_time(car_queued["pos"]))
+                yield self.env.process(self.travel(car_queued["car"], "norte", "sur"))
             else:
-                self.cars_waiting_north.append(car)
+                self.cars_waiting_north.append({
+                    "car": car,
+                    "pos": len(self.cars_waiting_north)
+                })
 
         elif direction_to == "norte":
             if self.south_traffic_light.is_green:
-                self.cars_waiting_south.append(car)
+                self.cars_waiting_south.append({
+                    "car": car,
+                    "pos": len(self.cars_waiting_north)
+                })
                 self.cars_passing += 1
                 car_queued = self.cars_waiting_south.pop(0)
-                yield self.env.process(self.travel(car, "sur", "norte"))
+                
+                self.env.process(self.car_start_time(car_queued["pos"]))
+                yield self.env.process(self.travel(car_queued["car"], "sur", "norte"))
             else:
-                self.cars_waiting_south.append(car)
+                self.cars_waiting_south.append({
+                    "car": car,
+                    "pos": len(self.cars_waiting_north)
+                })
 
 
 
@@ -124,8 +139,8 @@ def run_bridge(env, phases_duration):
         total_cars += 1
 
         # Arrival cars at south
-        #yield env.process(bridge.car_arrival('sur', total_cars))
-        #total_cars += 1
+        yield env.process(bridge.car_arrival('sur', total_cars))
+        total_cars += 1
 
     
 
