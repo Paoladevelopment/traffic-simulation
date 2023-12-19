@@ -41,6 +41,10 @@ class Bridge:
         self.cars_passing = 0
         self.cars_north_to_south = 0
         self.cars_south_to_north = 0
+        self.arrive_time = 0
+        self.leave_time = 0
+        self.total_time = []
+        self.waiting_time = []
     
     def change_phase(self):
         while True:
@@ -68,6 +72,9 @@ class Bridge:
         else:
             self.cars_south_to_north +=1
         print(f'Carro {car} ha llegado al {direction_to} en el minuto {self.env.now}...')
+        self.leave_time = self.env.now
+        self.total_time.append(self.leave_time - self.arrive_time)
+        self.waiting_time.append(self.leave_time - self.arrive_time - 1)
         
     
     def car_start_time(self,  car_pos):
@@ -82,7 +89,8 @@ class Bridge:
 
     def car_arrival(self, direction, num_cars):
         yield self.env.timeout(random.expovariate(1/3 if direction == 'norte' else 1/5))
-        print('Carro %s llegó al %s en el minuto %d' % (num_cars, direction, env.now))
+        print('Carro %s llegó al %s en el minuto %d' % (num_cars, direction, self.env.now))
+        self.arrive_time = self.env.now
         if direction == "norte":
             yield self.env.process(self.travel_to(num_cars, "sur"))
         elif direction == "sur":
@@ -141,6 +149,14 @@ def run_bridge(env, phases_duration):
         # Arrival cars at south
         yield env.process(bridge.car_arrival('sur', total_cars))
         total_cars += 1
+    
+    # Fin de la simulación, imprimir estadísticas
+    print("\n--- Estadísticas al final de la simulación ---")
+    print("Número total de autos que pasaron por el puente:", bridge.cars_north_to_south + bridge.cars_south_to_north)
+    print("Número de autos que esperaron en dirección norte:", len(bridge.cars_waiting_north))
+    print("Número de autos que esperaron en dirección sur:", len(bridge.cars_waiting_south))
+    print("Tiempo promedio total de espera:", sum(bridge.total_time) / len(bridge.total_time))
+    print("Tiempo promedio de espera (sin contar el tiempo de viaje):", sum(bridge.waiting_time) / len(bridge.waiting_time))
 
     
 
